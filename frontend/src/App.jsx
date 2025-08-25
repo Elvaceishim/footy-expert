@@ -8,6 +8,10 @@ import {
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 const API_BASE_URL = ''; // Use relative URLs to go through Vite proxy
 
+// Check if we're in development or production
+const IS_PRODUCTION = import.meta.env.PROD;
+const HAS_BACKEND = !IS_PRODUCTION; // Assume no backend in production for now
+
 // Enhanced helper: find match from chat text using flexible team name matching
 function findMatchIdFromText(text, matches) {
   const lowerText = text.toLowerCase();
@@ -62,15 +66,35 @@ function App() {
   const [selectedLeague, setSelectedLeague] = useState('premier-league');
   const [isAiThinking, setIsAiThinking] = useState(false);
 
+  // Fallback data for production
+  const FALLBACK_LEAGUES = [
+    { id: 'premier-league', name: 'Premier League', country: 'England' },
+    { id: 'la-liga', name: 'La Liga', country: 'Spain' },
+    { id: 'bundesliga', name: 'Bundesliga', country: 'Germany' },
+    { id: 'serie-a', name: 'Serie A', country: 'Italy' },
+    { id: 'ligue-1', name: 'Ligue 1', country: 'France' }
+  ];
+
+  const FALLBACK_MATCHES = [
+    { id: 1, home_team: 'Arsenal', away_team: 'Liverpool', date: '2025-08-30T15:00:00Z' },
+    { id: 2, home_team: 'Manchester City', away_team: 'Chelsea', date: '2025-08-31T17:30:00Z' },
+    { id: 3, home_team: 'Manchester United', away_team: 'Tottenham', date: '2025-09-01T14:00:00Z' }
+  ];
+
   // Load available leagues
   useEffect(() => {
     async function fetchLeagues() {
       try {
+        if (!HAS_BACKEND) {
+          setLeagues(FALLBACK_LEAGUES);
+          return;
+        }
         const res = await fetch(`${API_BASE_URL}/api/leagues`);
         const data = await res.json();
         setLeagues(data.leagues);
       } catch (e) {
         console.error('Failed to load leagues:', e);
+        setLeagues(FALLBACK_LEAGUES); // Fallback to static data
       }
     }
     fetchLeagues();
@@ -81,6 +105,19 @@ function App() {
     async function fetchMatches() {
       setLoadingMatches(true);
       try {
+        if (!HAS_BACKEND) {
+          const formatted = FALLBACK_MATCHES.map(f => ({
+            label: `${f.home_team} vs ${f.away_team}`,
+            id: f.id,
+            league: selectedLeague,
+            venue: 'Stadium',
+            date: f.date
+          }));
+          setMatches(formatted);
+          setLoadingMatches(false);
+          return;
+        }
+        
         const res = await fetch(`${API_BASE_URL}/api/fixtures/${selectedLeague}`);
         const data = await res.json();
         // Expecting {fixtures: [{id, home_team, away_team, ...}]}
@@ -94,7 +131,17 @@ function App() {
         setMatches(formatted);
         setLoadingMatches(false);
       } catch (e) {
-        setErrorMatches('Failed to load matches');
+        console.error('Failed to load matches:', e);
+        // Fallback to demo data
+        const formatted = FALLBACK_MATCHES.map(f => ({
+          label: `${f.home_team} vs ${f.away_team}`,
+          id: f.id,
+          league: selectedLeague,
+          venue: 'Stadium',
+          date: f.date
+        }));
+        setMatches(formatted);
+        setErrorMatches('Using demo data - backend not available');
         setLoadingMatches(false);
       }
     }
