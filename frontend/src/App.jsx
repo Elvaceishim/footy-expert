@@ -75,11 +75,38 @@ function App() {
     { id: 'ligue-1', name: 'Ligue 1', country: 'France' }
   ];
 
-  const FALLBACK_MATCHES = [
-    { id: 1, home_team: 'Arsenal', away_team: 'Liverpool', date: '2025-08-30T15:00:00Z' },
-    { id: 2, home_team: 'Manchester City', away_team: 'Chelsea', date: '2025-08-31T17:30:00Z' },
-    { id: 3, home_team: 'Manchester United', away_team: 'Tottenham', date: '2025-09-01T14:00:00Z' }
-  ];
+  const FALLBACK_MATCHES = {
+    'premier-league': [
+      { id: 1, home_team: 'Arsenal', away_team: 'Liverpool', date: '2025-08-30T15:00:00Z' },
+      { id: 2, home_team: 'Manchester City', away_team: 'Chelsea', date: '2025-08-31T17:30:00Z' },
+      { id: 3, home_team: 'Manchester United', away_team: 'Tottenham', date: '2025-09-01T14:00:00Z' },
+      { id: 4, home_team: 'Newcastle', away_team: 'Brighton', date: '2025-09-02T16:00:00Z' }
+    ],
+    'la-liga': [
+      { id: 11, home_team: 'Real Madrid', away_team: 'Barcelona', date: '2025-08-30T20:00:00Z' },
+      { id: 12, home_team: 'Atletico Madrid', away_team: 'Sevilla', date: '2025-08-31T18:30:00Z' },
+      { id: 13, home_team: 'Valencia', away_team: 'Villarreal', date: '2025-09-01T21:00:00Z' },
+      { id: 14, home_team: 'Real Sociedad', away_team: 'Athletic Bilbao', date: '2025-09-02T19:00:00Z' }
+    ],
+    'bundesliga': [
+      { id: 21, home_team: 'Bayern Munich', away_team: 'Borussia Dortmund', date: '2025-08-30T17:30:00Z' },
+      { id: 22, home_team: 'RB Leipzig', away_team: 'Bayer Leverkusen', date: '2025-08-31T15:30:00Z' },
+      { id: 23, home_team: 'Eintracht Frankfurt', away_team: 'Wolfsburg', date: '2025-09-01T17:00:00Z' },
+      { id: 24, home_team: 'Borussia Monchengladbach', away_team: 'Schalke 04', date: '2025-09-02T15:30:00Z' }
+    ],
+    'serie-a': [
+      { id: 31, home_team: 'Juventus', away_team: 'Inter Milan', date: '2025-08-30T19:00:00Z' },
+      { id: 32, home_team: 'AC Milan', away_team: 'Napoli', date: '2025-08-31T20:45:00Z' },
+      { id: 33, home_team: 'AS Roma', away_team: 'Lazio', date: '2025-09-01T17:00:00Z' },
+      { id: 34, home_team: 'Atalanta', away_team: 'Fiorentina', date: '2025-09-02T19:30:00Z' }
+    ],
+    'ligue-1': [
+      { id: 41, home_team: 'Paris Saint-Germain', away_team: 'Marseille', date: '2025-08-30T20:00:00Z' },
+      { id: 42, home_team: 'Lyon', away_team: 'Monaco', date: '2025-08-31T19:00:00Z' },
+      { id: 43, home_team: 'Lille', away_team: 'Nice', date: '2025-09-01T20:00:00Z' },
+      { id: 44, home_team: 'Rennes', away_team: 'Nantes', date: '2025-09-02T17:00:00Z' }
+    ]
+  };
 
   // Load available leagues
   useEffect(() => {
@@ -106,7 +133,8 @@ function App() {
       setLoadingMatches(true);
       try {
         if (!HAS_BACKEND) {
-          const formatted = FALLBACK_MATCHES.map(f => ({
+          const leagueMatches = FALLBACK_MATCHES[selectedLeague] || FALLBACK_MATCHES['premier-league'];
+          const formatted = leagueMatches.map(f => ({
             label: `${f.home_team} vs ${f.away_team}`,
             id: f.id,
             league: selectedLeague,
@@ -133,7 +161,8 @@ function App() {
       } catch (e) {
         console.error('Failed to load matches:', e);
         // Fallback to demo data
-        const formatted = FALLBACK_MATCHES.map(f => ({
+        const leagueMatches = FALLBACK_MATCHES[selectedLeague] || FALLBACK_MATCHES['premier-league'];
+        const formatted = leagueMatches.map(f => ({
           label: `${f.home_team} vs ${f.away_team}`,
           id: f.id,
           league: selectedLeague,
@@ -519,7 +548,7 @@ User's specific question: ${input}`;
 
         {/* Prediction Section */}
         <Paper elevation={3} sx={{ p: { xs: 2, sm: 4 } }}>
-          <Typography variant="h5" gutterBottom>Match Probability Prediction</Typography>
+          <Typography variant="h5" gutterBottom>Match Prediction</Typography>
           
           {/* League Selector */}
           <Box mb={2}>
