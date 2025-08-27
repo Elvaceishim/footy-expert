@@ -1,7 +1,6 @@
 const { fetchLiveFixtures, LEAGUES } = require('../../api/utils.cjs');
 
 exports.handler = async function(event, context) {
-  // Enable CORS
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -12,7 +11,7 @@ exports.handler = async function(event, context) {
     return {
       statusCode: 200,
       headers,
-      body: ''
+      body: JSON.stringify({})
     };
   }
 
