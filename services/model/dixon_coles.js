@@ -1,4 +1,4 @@
-export function poisson(lambda, k) {
+function poisson(lambda, k) {
   // naive Poisson pmf
   return Math.exp(-lambda) * Math.pow(lambda, k) / factorial(k);
 }
@@ -23,7 +23,7 @@ function dixonColesCorrection(homeGoals, awayGoals, lambdaHome, lambdaAway, rho 
 }
 
 // Calculate team attack rating based on recent form and season data
-export function calculateAttackRating(teamStats) {
+function calculateAttackRating(teamStats) {
   const { 
     goalsFor = 0, 
     matchesPlayed = 1, 
@@ -50,7 +50,7 @@ export function calculateAttackRating(teamStats) {
 }
 
 // Calculate team defense rating based on recent form and season data
-export function calculateDefenseRating(teamStats) {
+function calculateDefenseRating(teamStats) {
   const { 
     goalsAgainst = 0, 
     matchesPlayed = 1, 
@@ -77,7 +77,7 @@ export function calculateDefenseRating(teamStats) {
 }
 
 // Calculate venue-specific home advantage factor
-export function calculateHomeAdvantage(venueStats, homeTeam) {
+function calculateHomeAdvantage(venueStats, homeTeam) {
   const {
     homeWins = 0,
     homeDraws = 0,
@@ -115,7 +115,7 @@ export function calculateHomeAdvantage(venueStats, homeTeam) {
 }
 
 // Enhanced Dixon-Coles prediction with dynamic parameters
-export function predictProbs({ 
+function predictProbs({ 
   homeAttack, 
   homeDefense, 
   awayAttack, 
@@ -173,7 +173,7 @@ export function predictProbs({
 }
 
 // Legacy function for backward compatibility with static lambdas
-export function predictProbsStatic({ lambdaHome, lambdaAway, maxGoals = 6 }) {
+function predictProbsStatic({ lambdaHome, lambdaAway, maxGoals = 6 }) {
   return predictProbs({
     homeAttack: lambdaHome / 1.4, // Approximate conversion
     homeDefense: 1.0,
@@ -184,3 +184,12 @@ export function predictProbsStatic({ lambdaHome, lambdaAway, maxGoals = 6 }) {
     maxGoals
   });
 }
+
+module.exports = {
+  poisson,
+  calculateAttackRating,
+  calculateDefenseRating,
+  calculateHomeAdvantage,
+  predictProbs,
+  predictProbsStatic
+};

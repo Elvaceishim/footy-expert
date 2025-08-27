@@ -1,4 +1,4 @@
-import axios from 'axios';
+const axios = require('axios');
 
 // The Sports DB API client (FREE, no auth required!)
 const sportsDB = axios.create({
@@ -7,7 +7,7 @@ const sportsDB = axios.create({
 });
 
 // Simple leagues configuration  
-export const LEAGUES = {
+const LEAGUES = {
   'premier-league': { id: '4328', name: 'English Premier League', country: 'England', season: '2025-2026' },
   'la-liga': { id: '4335', name: 'Spanish La Liga', country: 'Spain', season: '2025-2026' },
   'bundesliga': { id: '4331', name: 'German Bundesliga', country: 'Germany', season: '2025-2026' },
@@ -15,7 +15,7 @@ export const LEAGUES = {
   'ligue-1': { id: '4334', name: 'French Ligue 1', country: 'France', season: '2025-2026' }
 };
 
-export async function fetchLiveFixtures(leagueKey = 'premier-league') {
+async function fetchLiveFixtures(leagueKey = 'premier-league') {
   const league = LEAGUES[leagueKey];
   if (!league) throw new Error(`League '${leagueKey}' not supported`);
 
@@ -45,7 +45,7 @@ export async function fetchLiveFixtures(leagueKey = 'premier-league') {
   }
 }
 
-export async function fetchRecentResults(leagueKey = 'premier-league', minMatches = 5) {
+async function fetchRecentResults(leagueKey = 'premier-league', minMatches = 5) {
   const league = LEAGUES[leagueKey];
   if (!league) throw new Error(`League '${leagueKey}' not supported`);
 
@@ -99,7 +99,7 @@ export async function fetchRecentResults(leagueKey = 'premier-league', minMatche
   }
 }
 
-export async function fetchCurrentStandings(leagueKey = 'premier-league') {
+async function fetchCurrentStandings(leagueKey = 'premier-league') {
   const league = LEAGUES[leagueKey];
   if (!league) throw new Error(`League '${leagueKey}' not supported`);
 
@@ -141,3 +141,10 @@ export async function fetchCurrentStandings(leagueKey = 'premier-league') {
     return [];
   }
 }
+
+module.exports = {
+  LEAGUES,
+  fetchLiveFixtures,
+  fetchRecentResults,
+  fetchCurrentStandings
+};

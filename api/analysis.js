@@ -1,7 +1,7 @@
-import { fetchRecentResults, fetchCurrentStandings, fetchLiveFixtures, LEAGUES } from './utils.js';
-import { predictProbs } from '../services/model/dixon_coles.js';
+const { fetchRecentResults, fetchCurrentStandings, fetchLiveFixtures, LEAGUES } = require('./utils.js');
+const { predictProbs } = require('../services/model/dixon_coles.js');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -241,4 +241,4 @@ export default async function handler(req, res) {
     console.error('Error in analysis:', error);
     res.status(500).json({ error: error.message });
   }
-}
+};

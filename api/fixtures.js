@@ -1,6 +1,6 @@
-import { fetchLiveFixtures, LEAGUES } from './utils.js';
+const { fetchLiveFixtures, LEAGUES } = require('./utils.js');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -34,4 +34,4 @@ export default async function handler(req, res) {
     console.error('Error fetching fixtures:', error);
     res.status(500).json({ error: error.message });
   }
-}
+};
