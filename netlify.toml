@@ -4,7 +4,10 @@
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "22"
+
+[functions]
+directory = "netlify/functions"
 
 # SPA redirect - catch all routes and redirect to index.html
 [[redirects]]
