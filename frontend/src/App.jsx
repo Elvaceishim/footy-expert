@@ -9,19 +9,31 @@ import {
 const getOpenRouterApiKey = () => {
   // Method 1: Vite environment variable (preferred for production)
   const viteKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-  if (viteKey && viteKey.length > 10) {
+  
+  // Debug environment loading
+  console.log('🔑 API Key Loading Debug:');
+  console.log('- Raw viteKey exists:', !!viteKey);
+  console.log('- Raw viteKey length:', viteKey?.length);
+  console.log('- Raw viteKey preview:', viteKey?.substring(0, 15) + '...');
+  
+  if (viteKey && viteKey.length > 10 && viteKey.startsWith('sk-or-v1-')) {
     console.log('✅ Using Vite environment variable');
     return viteKey;
   }
   
   // Method 2: Check for any environment variables that might contain the key
   const allEnvKeys = Object.keys(import.meta.env);
+  console.log('🔍 All environment keys:', allEnvKeys);
+  
   const potentialKeys = allEnvKeys.filter(key => 
     key.includes('OPENROUTER') || key.includes('API_KEY')
   );
   
+  console.log('🔍 Potential API key variables:', potentialKeys);
+  
   for (const key of potentialKeys) {
     const value = import.meta.env[key];
+    console.log(`🔍 Checking ${key}:`, value?.substring(0, 15) + '...');
     if (value && value.startsWith('sk-or-v1-')) {
       console.log('✅ Found API key in:', key);
       return value;
@@ -572,10 +584,19 @@ Be detailed, analytical, and provide clear reasoning for your probability predic
       console.log('- API Key length:', OPENROUTER_API_KEY?.length);
       console.log('- API Key starts with sk-or-v1-:', OPENROUTER_API_KEY?.startsWith('sk-or-v1-'));
       console.log('- API Key first 20 chars:', OPENROUTER_API_KEY?.substring(0, 20));
+      console.log('- API Key last 10 chars:', OPENROUTER_API_KEY?.substring(OPENROUTER_API_KEY.length - 10));
       
       // Validate API key format before making the call
-      if (!OPENROUTER_API_KEY || !OPENROUTER_API_KEY.startsWith('sk-or-v1-') || OPENROUTER_API_KEY.length < 50) {
-        throw new Error(`Invalid API key format. Length: ${OPENROUTER_API_KEY?.length}, Valid format: ${OPENROUTER_API_KEY?.startsWith('sk-or-v1-')}`);
+      if (!OPENROUTER_API_KEY) {
+        throw new Error('No API key found. Please set VITE_OPENROUTER_API_KEY in your .env file.');
+      }
+      
+      if (!OPENROUTER_API_KEY.startsWith('sk-or-v1-')) {
+        throw new Error(`Invalid API key format. Expected to start with 'sk-or-v1-', but got: '${OPENROUTER_API_KEY.substring(0, 15)}...'`);
+      }
+      
+      if (OPENROUTER_API_KEY.length < 20) {
+        throw new Error(`API key seems too short. Length: ${OPENROUTER_API_KEY.length}, Expected: > 20 chars`);
       }
 
       const aiRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
