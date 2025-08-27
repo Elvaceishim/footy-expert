@@ -6,7 +6,7 @@ const sportsDB = axios.create({
   timeout: 10000
 });
 
-// Simple leagues configuration  
+// Simple leagues configuration
 const LEAGUES = {
   'premier-league': { id: '4328', name: 'English Premier League', country: 'England', season: '2025-2026' },
   'la-liga': { id: '4335', name: 'Spanish La Liga', country: 'Spain', season: '2025-2026' },
