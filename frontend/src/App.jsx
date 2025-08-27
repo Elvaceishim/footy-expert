@@ -5,12 +5,61 @@ import {
   Select, MenuItem, FormControl, InputLabel
 } from '@mui/material';
 
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
+// Environment-based API key loading with graceful fallback
+const getOpenRouterApiKey = () => {
+  // Method 1: Vite environment variable (preferred for production)
+  const viteKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+  if (viteKey && viteKey.length > 10) {
+    console.log('✅ Using Vite environment variable');
+    return viteKey;
+  }
+  
+  // Method 2: Check for any environment variables that might contain the key
+  const allEnvKeys = Object.keys(import.meta.env);
+  const potentialKeys = allEnvKeys.filter(key => 
+    key.includes('OPENROUTER') || key.includes('API_KEY')
+  );
+  
+  for (const key of potentialKeys) {
+    const value = import.meta.env[key];
+    if (value && value.startsWith('sk-or-v1-')) {
+      console.log('✅ Found API key in:', key);
+      return value;
+    }
+  }
+  
+  // Method 3: Return null to indicate no valid API key found
+  console.warn('⚠️ No OpenRouter API key found in environment variables');
+  console.warn('🔧 Please add VITE_OPENROUTER_API_KEY to your .env file');
+  
+  return null;
+};
+
+const OPENROUTER_API_KEY = getOpenRouterApiKey();
 const API_BASE_URL = ''; // Use relative URLs to go through Vite proxy
+
+// Comprehensive debug logging
+console.log('🔍 App Initialization Debug:');
+console.log('- Environment mode:', import.meta.env.MODE);
+console.log('- Development build:', import.meta.env.DEV);
+console.log('- Production build:', import.meta.env.PROD);
+console.log('- Available VITE_ variables:', Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')));
+console.log('- Direct VITE_OPENROUTER_API_KEY check:', import.meta.env.VITE_OPENROUTER_API_KEY ? 'PRESENT' : 'MISSING');
+
+// Validate final API key
+if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY.length < 10) {
+  console.error('❌ No valid OpenRouter API key found!');
+  console.error('🔧 Please get a new API key from https://openrouter.ai/');
+} else {
+  console.log('✅ API Key ready - length:', OPENROUTER_API_KEY.length);
+  console.log('✅ API Key prefix:', OPENROUTER_API_KEY.substring(0, 15) + '...');
+}
 
 // Check if we're in development or production
 const IS_PRODUCTION = import.meta.env.PROD;
-const HAS_BACKEND = !IS_PRODUCTION; // Assume no backend in production for now
+
+// Dynamic backend availability check - will be set after testing API
+let HAS_BACKEND = false;
 
 // Enhanced helper: find match from chat text using flexible team name matching
 function findMatchIdFromText(text, matches) {
@@ -108,19 +157,40 @@ function App() {
     ]
   };
 
+  // Check if backend is available
+  const checkBackendAvailability = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/leagues`, { 
+        method: 'GET',
+        signal: AbortSignal.timeout(3000) // 3 second timeout
+      });
+      return response.ok;
+    } catch (error) {
+      console.log('Backend not available:', error.message);
+      return false;
+    }
+  };
+
   // Load available leagues
   useEffect(() => {
     async function fetchLeagues() {
       try {
+        // First check if backend is available
+        const backendAvailable = await checkBackendAvailability();
+        HAS_BACKEND = backendAvailable;
+        
         if (!HAS_BACKEND) {
+          console.log('Using fallback data - backend not available');
           setLeagues(FALLBACK_LEAGUES);
           return;
         }
+        
         const res = await fetch(`${API_BASE_URL}/api/leagues`);
         const data = await res.json();
         setLeagues(data.leagues);
       } catch (e) {
         console.error('Failed to load leagues:', e);
+        HAS_BACKEND = false;
         setLeagues(FALLBACK_LEAGUES); // Fallback to static data
       }
     }
@@ -268,10 +338,11 @@ User question: ${input}`;
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ 
-            model: "anthropic/claude-3.5-sonnet",
+            model: "deepseek/deepseek-chat-v3.1",
             messages: [{ role: 'user', content: expertPrompt }],
             temperature: 0.2,
-            max_tokens: 1000
+            max_tokens: 1000,
+            reasoning_enabled: true  // Enable thinking mode for deeper analysis
           })
         });
         
@@ -366,10 +437,11 @@ User's specific question: ${input}`;
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({ 
-                model: "anthropic/claude-3.5-sonnet",
+                model: "deepseek/deepseek-chat-v3.1",
                 messages: [{ role: 'user', content: matchAnalysisPrompt }],
                 temperature: 0.7,
-                max_tokens: 1000
+                max_tokens: 1000,
+                reasoning_enabled: true  // Enable thinking mode for deeper analysis
               })
             });
             const aiData = await aiRes.json();
@@ -413,16 +485,167 @@ User's specific question: ${input}`;
     }
   };
 
-  // Prediction fetch based on selected match
+  // AI-based prediction for selected match
   const handlePredict = async () => {
-    if (selectedMatch) {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/predict?fixture_id=${selectedMatch.id}&league=${selectedLeague}`);
-        const data = await res.json();
-        setPrediction(data);
-      } catch (e) {
-        setPrediction({ error: 'Failed to fetch prediction' });
+    if (!selectedMatch) return;
+    
+    if (!OPENROUTER_API_KEY) {
+      setPrediction({ 
+        error: 'OpenRouter API key not configured',
+        analysis: 'Please add your OpenRouter API key to use AI predictions.'
+      });
+      return;
+    }
+
+    try {
+      setIsAiThinking(true);
+      
+      const homeTeam = selectedMatch.label.split(' vs ')[0];
+      const awayTeam = selectedMatch.label.split(' vs ')[1];
+      
+      const predictionPrompt = `You are a professional football analyst. Analyze the upcoming match between ${homeTeam} vs ${awayTeam} in the ${selectedLeague.replace('-', ' ')}.
+
+Please provide a comprehensive match analysis with:
+
+**MATCH PREDICTION:**
+- Home Win: [X]%
+- Draw: [X]%  
+- Away Win: [X]%
+
+**DETAILED REASONING:**
+
+1. **Current Form Analysis**
+   - ${homeTeam}'s recent performances
+   - ${awayTeam}'s recent performances
+
+2. **Head-to-Head Record**
+   - Historical matchups between these teams
+   - Recent meetings and patterns
+
+3. **Key Factors**
+   - Home advantage
+   - Squad strength and injuries
+   - Tactical matchups
+   - Motivation levels
+
+4. **Final Assessment**
+   - Why you predict this outcome
+   - Main deciding factors
+   - Confidence level in prediction
+
+Be detailed, analytical, and provide clear reasoning for your probability predictions.`;
+
+      // Debug the API key right before the call
+      console.log('🔍 API Call Debug:');
+      console.log('- API Key exists:', !!OPENROUTER_API_KEY);
+      console.log('- API Key length:', OPENROUTER_API_KEY?.length);
+      console.log('- API Key starts with sk-or-v1-:', OPENROUTER_API_KEY?.startsWith('sk-or-v1-'));
+      console.log('- API Key first 20 chars:', OPENROUTER_API_KEY?.substring(0, 20));
+      
+      // Validate API key format before making the call
+      if (!OPENROUTER_API_KEY || !OPENROUTER_API_KEY.startsWith('sk-or-v1-') || OPENROUTER_API_KEY.length < 50) {
+        throw new Error(`Invalid API key format. Length: ${OPENROUTER_API_KEY?.length}, Valid format: ${OPENROUTER_API_KEY?.startsWith('sk-or-v1-')}`);
       }
+
+      const aiRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          model: "deepseek/deepseek-chat-v3.1",
+          messages: [{ role: 'user', content: predictionPrompt }],
+          temperature: 0.7,
+          max_tokens: 1500,
+          reasoning_enabled: true  // Enable thinking mode for deeper analysis
+        })
+      });
+
+      // Enhanced error handling with response details
+      if (!aiRes.ok) {
+        const errorData = await aiRes.text();
+        console.error('🚨 API Error Details:', {
+          status: aiRes.status,
+          statusText: aiRes.statusText,
+          headers: Object.fromEntries(aiRes.headers.entries()),
+          body: errorData
+        });
+        
+        if (aiRes.status === 401) {
+          // Check if it's a "User not found" error (invalid API key)
+          if (errorData.includes('User not found')) {
+            throw new Error('Invalid OpenRouter API key - User not found. Please get a new API key from https://openrouter.ai/');
+          } else {
+            throw new Error('Invalid or missing OpenRouter API key');
+          }
+        } else if (aiRes.status === 429) {
+          throw new Error('Rate limit exceeded. Please try again later');
+        } else {
+          throw new Error(`API error: ${aiRes.status} ${aiRes.statusText} - ${errorData}`);
+        }
+      }
+
+      const aiData = await aiRes.json();
+      const analysis = aiData.choices?.[0]?.message?.content;
+      
+      if (!analysis) {
+        throw new Error('No analysis received from AI');
+      }
+      
+      // Extract probabilities from AI response (improved regex matching)
+      const homeMatch = analysis.match(/home.*?win.*?(\d+)%/i) || analysis.match(/(\d+)%.*?home/i);
+      const drawMatch = analysis.match(/draw.*?(\d+)%/i);
+      const awayMatch = analysis.match(/away.*?win.*?(\d+)%/i) || analysis.match(/(\d+)%.*?away/i);
+      
+      const homePct = homeMatch ? parseInt(homeMatch[1]) : 40;
+      const drawPct = drawMatch ? parseInt(drawMatch[1]) : 25;
+      const awayPct = awayMatch ? parseInt(awayMatch[1]) : 35;
+      
+      setPrediction({
+        fixture_id: selectedMatch.id,
+        home_team: homeTeam,
+        away_team: awayTeam,
+        league: selectedLeague,
+        predictions: {
+          home_win: (homePct / 100).toFixed(3),
+          draw: (drawPct / 100).toFixed(3),
+          away_win: (awayPct / 100).toFixed(3)
+        },
+        analysis: {
+          full_analysis: analysis,
+          confidence: 'AI Analysis'
+        }
+      });
+      
+    } catch (error) {
+      console.error('AI prediction error:', error);
+      const homeTeam = selectedMatch.label.split(' vs ')[0];
+      const awayTeam = selectedMatch.label.split(' vs ')[1];
+      
+      let errorMessage = 'Unable to generate AI prediction';
+      let detailedAnalysis = `Failed to analyze ${homeTeam} vs ${awayTeam}.`;
+      
+      if (error.message.includes('User not found')) {
+        errorMessage = 'Invalid API Key';
+        detailedAnalysis = `❌ **API Key Invalid**\n\nThe OpenRouter API key is not valid or has expired.\n\n**To fix this:**\n\n1. 🌐 Visit https://openrouter.ai/\n2. 🔑 Create an account and get a new API key\n3. 💰 Add some credits to your account\n4. 📝 Update your .env file with: VITE_OPENROUTER_API_KEY=your_new_key\n5. 🔄 Restart the application\n\n**Note:** OpenRouter requires a valid account with credits to use their AI models.`;
+      } else if (error.message.includes('Invalid or missing OpenRouter API key')) {
+        errorMessage = 'API Key Required';
+        detailedAnalysis = `To get AI predictions for ${homeTeam} vs ${awayTeam}, you need to:\n\n1. Get an API key from https://openrouter.ai/\n2. Add it to your environment variables as VITE_OPENROUTER_API_KEY\n3. Restart the application\n\nThe API key enables access to advanced AI analysis for match predictions.`;
+      } else if (error.message.includes('Rate limit exceeded')) {
+        detailedAnalysis = `Rate limit exceeded for ${homeTeam} vs ${awayTeam}.\n\nPlease wait a few minutes before requesting another prediction.`;
+      } else {
+        detailedAnalysis = `Failed to analyze ${homeTeam} vs ${awayTeam}.\n\nError: ${error.message}\n\nThis could be due to:\n• Invalid or expired API key\n• Network connectivity issues\n• API service problems\n• Rate limiting\n\nPlease check your OpenRouter API key and try again.`;
+      }
+      
+      setPrediction({ 
+        error: errorMessage,
+        analysis: {
+          full_analysis: detailedAnalysis
+        }
+      });
+    } finally {
+      setIsAiThinking(false);
     }
   };
 
@@ -598,22 +821,36 @@ User's specific question: ${input}`;
           {prediction && (
             <Box mt={2}>
               {prediction.error ? (
-                <Typography color="error">{prediction.error}</Typography>
+                <Box>
+                  <Typography color="error">
+                    {prediction.error}
+                  </Typography>
+                  {prediction.analysis?.full_analysis && (
+                    <Box mt={1} sx={{ whiteSpace: 'pre-wrap', fontSize: '0.875rem', color: 'text.secondary' }}>
+                      {prediction.analysis.full_analysis}
+                    </Box>
+                  )}
+                </Box>
               ) : (
                 <>
                   <Typography variant="h6" gutterBottom>
                     🏟️ {prediction.home_team} vs {prediction.away_team}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    {prediction.league} • {prediction.venue}
+                    {prediction.league?.replace('-', ' ')} • AI Analysis
                   </Typography>
                   <Box mt={2}>
-                    <Typography>🏠 Home Win ({prediction.home_team}): <b>{(prediction.p_home * 100).toFixed(1)}%</b></Typography>
-                    <Typography>🤝 Draw: <b>{(prediction.p_draw * 100).toFixed(1)}%</b></Typography>
-                    <Typography>✈️ Away Win ({prediction.away_team}): <b>{(prediction.p_away * 100).toFixed(1)}%</b></Typography>
+                    <Typography>🏠 Home Win ({prediction.home_team}): <b>{(prediction.predictions.home_win * 100).toFixed(1)}%</b></Typography>
+                    <Typography>🤝 Draw: <b>{(prediction.predictions.draw * 100).toFixed(1)}%</b></Typography>
+                    <Typography>✈️ Away Win ({prediction.away_team}): <b>{(prediction.predictions.away_win * 100).toFixed(1)}%</b></Typography>
                   </Box>
+                  {prediction.analysis?.full_analysis && (
+                    <Box mt={2} p={2} sx={{ backgroundColor: '#f5f5f5', borderRadius: 1, whiteSpace: 'pre-wrap', fontSize: '0.875rem' }}>
+                      {prediction.analysis.full_analysis}
+                    </Box>
+                  )}
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                    Generated: {new Date(prediction.generated_at).toLocaleString()}
+                    Generated at {new Date().toLocaleString()}
                   </Typography>
                 </>
               )}
