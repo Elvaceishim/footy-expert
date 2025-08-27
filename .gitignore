@@ -102,3 +102,6 @@ Thumbs.db
 temp/
 tmp/
 .vercel
+
+# Local Netlify folder
+.netlify
