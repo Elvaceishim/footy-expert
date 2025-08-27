@@ -232,13 +232,22 @@ function App() {
   // Check if backend is available
   const checkBackendAvailability = async () => {
     try {
+      console.log('🔍 Testing backend availability at:', `${API_BASE_URL}/api/leagues`);
       const response = await fetch(`${API_BASE_URL}/api/leagues`, { 
         method: 'GET',
-        signal: AbortSignal.timeout(3000) // 3 second timeout
+        signal: AbortSignal.timeout(5000) // 5 second timeout
       });
-      return response.ok;
+      console.log('🔍 Backend response status:', response.status, response.statusText);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Backend is available, received data:', data);
+        return true;
+      } else {
+        console.log('❌ Backend responded with error:', response.status);
+        return false;
+      }
     } catch (error) {
-      console.log('Backend not available:', error.message);
+      console.log('❌ Backend not available:', error.message);
       return false;
     }
   };
@@ -259,9 +268,17 @@ function App() {
           console.log('✅ Loaded', FALLBACK_LEAGUES.length, 'fallback leagues');
           return;
         }
-        
+
+        console.log('🔍 Fetching leagues from backend...');
         const res = await fetch(`${API_BASE_URL}/api/leagues`);
+        console.log('🔍 Backend leagues response status:', res.status);
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
         const data = await res.json();
+        console.log('✅ Backend leagues data received:', data);
         setLeagues(data.leagues);
         console.log('✅ Loaded', data.leagues.length, 'leagues from backend');
       } catch (e) {
