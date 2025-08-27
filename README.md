@@ -1,23 +1,75 @@
 # Football Prediction App
 
-A professional football prediction application using advanced statistical analysis and real-time data from The Sports DB API.
+A professional football prediction application using advanced statistical analysis, real-time data, and AI-powered match analysis.
 
 ## Features
 
 - **Real-time Football Data**: Live match results, standings, and fixtures for top European leagues
-- **Advanced Statistical Analysis**: Enhanced Dixon-Coles model for accurate match predictions
-- **Professional AI Analysis**: Detailed match breakdowns with expected goals and team ratings
+- **Advanced Statistical Analysis**: Enhanced Dixon-Coles model for accurate match predictions  
+- **AI-Powered Analysis**: Professional match breakdowns using DeepSeek V3.1 with detailed reasoning
 - **Multi-League Support**: Premier League, La Liga, Bundesliga, Serie A, Ligue 1
-- **Historical Data Integration**: Uses recent form across seasons for accurate analysis
+- **Interactive Chat**: Ask questions about recent results, standings, and team form
+- **Fallback Data**: Works offline with sample fixtures when backend is unavailable
 
 ## Tech Stack
 
 - **Frontend**: React + Vite + Material-UI
-- **Backend**: Node.js + Fastify
-- **AI**: OpenRouter API (Claude 3.5 Sonnet)
+- **Backend**: Node.js + Fastify (optional - app works with frontend only)
+- **AI**: OpenRouter API (DeepSeek V3.1)
 - **Data Source**: The Sports DB API (free, no auth required)
+- **Deployment**: Netlify (frontend), optional backend deployment
 
 ## Quick Start
+
+### Frontend Only (Recommended for Demo)
+
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd footy-prob/frontend
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your OpenRouter API key
+   ```
+
+4. **Start the application**
+   ```bash
+   npm run dev
+   ```
+
+The app will run on `http://localhost:5173` with fallback data and AI predictions.
+
+### Full Stack (Frontend + Backend)
+
+1. **Clone and install**
+   ```bash
+   git clone <your-repo-url>
+   cd footy-prob
+   npm install
+   cd frontend && npm install && cd ..
+   ```
+
+2. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   cp frontend/.env.example frontend/.env
+   # Add your API keys to both .env files
+   ```
+
+3. **Start both services**
+   ```bash
+   npm run dev
+   ```
+
+This starts both the backend API (port 3001) and frontend (port 5173).
 
 ### 1. Clone and Install
 ```bash
