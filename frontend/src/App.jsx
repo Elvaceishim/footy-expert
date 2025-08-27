@@ -117,11 +117,11 @@ function App() {
 
   // Fallback data for production
   const FALLBACK_LEAGUES = [
-    { id: 'premier-league', name: 'Premier League', country: 'England' },
-    { id: 'la-liga', name: 'La Liga', country: 'Spain' },
-    { id: 'bundesliga', name: 'Bundesliga', country: 'Germany' },
-    { id: 'serie-a', name: 'Serie A', country: 'Italy' },
-    { id: 'ligue-1', name: 'Ligue 1', country: 'France' }
+    { key: 'premier-league', id: 'premier-league', name: 'Premier League', country: 'England' },
+    { key: 'la-liga', id: 'la-liga', name: 'La Liga', country: 'Spain' },
+    { key: 'bundesliga', id: 'bundesliga', name: 'Bundesliga', country: 'Germany' },
+    { key: 'serie-a', id: 'serie-a', name: 'Serie A', country: 'Italy' },
+    { key: 'ligue-1', id: 'ligue-1', name: 'Ligue 1', country: 'France' }
   ];
 
   const FALLBACK_MATCHES = {
@@ -174,24 +174,29 @@ function App() {
   // Load available leagues
   useEffect(() => {
     async function fetchLeagues() {
+      console.log('🔍 Fetching leagues...');
       try {
         // First check if backend is available
         const backendAvailable = await checkBackendAvailability();
         HAS_BACKEND = backendAvailable;
+        console.log('🔍 Backend available:', HAS_BACKEND);
         
         if (!HAS_BACKEND) {
-          console.log('Using fallback data - backend not available');
+          console.log('🔄 Using fallback leagues data');
           setLeagues(FALLBACK_LEAGUES);
+          console.log('✅ Loaded', FALLBACK_LEAGUES.length, 'fallback leagues');
           return;
         }
         
         const res = await fetch(`${API_BASE_URL}/api/leagues`);
         const data = await res.json();
         setLeagues(data.leagues);
+        console.log('✅ Loaded', data.leagues.length, 'leagues from backend');
       } catch (e) {
         console.error('Failed to load leagues:', e);
         HAS_BACKEND = false;
         setLeagues(FALLBACK_LEAGUES); // Fallback to static data
+        console.log('🔄 Error fallback: Loaded', FALLBACK_LEAGUES.length, 'leagues');
       }
     }
     fetchLeagues();
@@ -201,8 +206,14 @@ function App() {
   useEffect(() => {
     async function fetchMatches() {
       setLoadingMatches(true);
+      setErrorMatches(null);
+      
+      console.log('🔍 Fetching matches for league:', selectedLeague);
+      console.log('🔍 Backend available:', HAS_BACKEND);
+      
       try {
         if (!HAS_BACKEND) {
+          console.log('🔄 Using fallback matches data');
           const leagueMatches = FALLBACK_MATCHES[selectedLeague] || FALLBACK_MATCHES['premier-league'];
           const formatted = leagueMatches.map(f => ({
             label: `${f.home_team} vs ${f.away_team}`,
@@ -213,6 +224,7 @@ function App() {
           }));
           setMatches(formatted);
           setLoadingMatches(false);
+          console.log('✅ Loaded', formatted.length, 'fallback matches');
           return;
         }
         
@@ -228,6 +240,7 @@ function App() {
         }));
         setMatches(formatted);
         setLoadingMatches(false);
+        console.log('✅ Loaded', formatted.length, 'matches from backend');
       } catch (e) {
         console.error('Failed to load matches:', e);
         // Fallback to demo data
@@ -242,9 +255,14 @@ function App() {
         setMatches(formatted);
         setErrorMatches('Using demo data - backend not available');
         setLoadingMatches(false);
+        console.log('🔄 Error fallback: Loaded', formatted.length, 'demo matches');
       }
     }
-    fetchMatches();
+    
+    // Only fetch matches if we have a selected league
+    if (selectedLeague) {
+      fetchMatches();
+    }
   }, [selectedLeague]);
 
   // Chat/assistant logic with real-time football data
@@ -487,7 +505,15 @@ User's specific question: ${input}`;
 
   // AI-based prediction for selected match
   const handlePredict = async () => {
-    if (!selectedMatch) return;
+    if (!selectedMatch) {
+      console.log('❌ No match selected');
+      return;
+    }
+    
+    console.log('🔍 Prediction Debug:');
+    console.log('- Selected match:', selectedMatch);
+    console.log('- Selected league:', selectedLeague);
+    console.log('- API Key available:', !!OPENROUTER_API_KEY);
     
     if (!OPENROUTER_API_KEY) {
       setPrediction({ 
@@ -503,7 +529,12 @@ User's specific question: ${input}`;
       const homeTeam = selectedMatch.label.split(' vs ')[0];
       const awayTeam = selectedMatch.label.split(' vs ')[1];
       
-      const predictionPrompt = `You are a professional football analyst. Analyze the upcoming match between ${homeTeam} vs ${awayTeam} in the ${selectedLeague.replace('-', ' ')}.
+      // Safely handle selectedLeague that might be undefined
+      const leagueName = selectedLeague ? selectedLeague.replace('-', ' ') : 'Premier League';
+      
+      console.log('🏟️ Analyzing:', homeTeam, 'vs', awayTeam, 'in', leagueName);
+      
+      const predictionPrompt = `You are a professional football analyst. Analyze the upcoming match between ${homeTeam} vs ${awayTeam} in the ${leagueName}.
 
 Please provide a comprehensive match analysis with:
 
