@@ -136,36 +136,96 @@ function App() {
     { key: 'ligue-1', id: 'ligue-1', name: 'Ligue 1', country: 'France' }
   ];
 
+  // Generate realistic upcoming matches for the next 2 weeks
+  const generateUpcomingMatches = () => {
+    const now = new Date();
+    const matches = [];
+    
+    // Generate matches for the next 14 days
+    for (let i = 0; i < 14; i++) {
+      const matchDate = new Date(now);
+      matchDate.setDate(now.getDate() + i);
+      
+      // Skip some days to make it more realistic (not every day has matches)
+      if (i % 3 === 1) continue;
+      
+      // Different time slots for different days
+      const timeSlots = ['15:00', '17:30', '20:00', '12:30', '19:45'];
+      const timeSlot = timeSlots[i % timeSlots.length];
+      
+      matchDate.setHours(parseInt(timeSlot.split(':')[0]), parseInt(timeSlot.split(':')[1]), 0, 0);
+      
+      matches.push({
+        date: matchDate.toISOString(),
+        dayIndex: i
+      });
+    }
+    
+    return matches;
+  };
+
+  const upcomingDates = generateUpcomingMatches();
+
   const FALLBACK_MATCHES = {
     'premier-league': [
-      { id: 1, home_team: 'Arsenal', away_team: 'Liverpool', date: '2025-08-30T15:00:00Z' },
-      { id: 2, home_team: 'Manchester City', away_team: 'Chelsea', date: '2025-08-31T17:30:00Z' },
-      { id: 3, home_team: 'Manchester United', away_team: 'Tottenham', date: '2025-09-01T14:00:00Z' },
-      { id: 4, home_team: 'Newcastle', away_team: 'Brighton', date: '2025-09-02T16:00:00Z' }
+      { id: 1, home_team: 'Arsenal', away_team: 'Liverpool', date: upcomingDates[0]?.date },
+      { id: 2, home_team: 'Manchester City', away_team: 'Chelsea', date: upcomingDates[1]?.date },
+      { id: 3, home_team: 'Manchester United', away_team: 'Tottenham', date: upcomingDates[2]?.date },
+      { id: 4, home_team: 'Newcastle', away_team: 'Brighton', date: upcomingDates[3]?.date },
+      { id: 5, home_team: 'Aston Villa', away_team: 'West Ham', date: upcomingDates[4]?.date },
+      { id: 6, home_team: 'Everton', away_team: 'Fulham', date: upcomingDates[5]?.date },
+      { id: 7, home_team: 'Brentford', away_team: 'Crystal Palace', date: upcomingDates[6]?.date },
+      { id: 8, home_team: 'Nottingham Forest', away_team: 'Wolves', date: upcomingDates[7]?.date },
+      { id: 9, home_team: 'Bournemouth', away_team: 'Sheffield United', date: upcomingDates[8]?.date },
+      { id: 10, home_team: 'Burnley', away_team: 'Luton Town', date: upcomingDates[9]?.date }
     ],
     'la-liga': [
-      { id: 11, home_team: 'Real Madrid', away_team: 'Barcelona', date: '2025-08-30T20:00:00Z' },
-      { id: 12, home_team: 'Atletico Madrid', away_team: 'Sevilla', date: '2025-08-31T18:30:00Z' },
-      { id: 13, home_team: 'Valencia', away_team: 'Villarreal', date: '2025-09-01T21:00:00Z' },
-      { id: 14, home_team: 'Real Sociedad', away_team: 'Athletic Bilbao', date: '2025-09-02T19:00:00Z' }
+      { id: 11, home_team: 'Real Madrid', away_team: 'Barcelona', date: upcomingDates[0]?.date },
+      { id: 12, home_team: 'Atletico Madrid', away_team: 'Sevilla', date: upcomingDates[1]?.date },
+      { id: 13, home_team: 'Valencia', away_team: 'Villarreal', date: upcomingDates[2]?.date },
+      { id: 14, home_team: 'Real Sociedad', away_team: 'Athletic Bilbao', date: upcomingDates[3]?.date },
+      { id: 15, home_team: 'Real Betis', away_team: 'Getafe', date: upcomingDates[4]?.date },
+      { id: 16, home_team: 'Osasuna', away_team: 'Las Palmas', date: upcomingDates[5]?.date },
+      { id: 17, home_team: 'Celta Vigo', away_team: 'Girona', date: upcomingDates[6]?.date },
+      { id: 18, home_team: 'Mallorca', away_team: 'Alaves', date: upcomingDates[7]?.date },
+      { id: 19, home_team: 'Rayo Vallecano', away_team: 'Cadiz', date: upcomingDates[8]?.date },
+      { id: 20, home_team: 'Almeria', away_team: 'Granada', date: upcomingDates[9]?.date }
     ],
     'bundesliga': [
-      { id: 21, home_team: 'Bayern Munich', away_team: 'Borussia Dortmund', date: '2025-08-30T17:30:00Z' },
-      { id: 22, home_team: 'RB Leipzig', away_team: 'Bayer Leverkusen', date: '2025-08-31T15:30:00Z' },
-      { id: 23, home_team: 'Eintracht Frankfurt', away_team: 'Wolfsburg', date: '2025-09-01T17:00:00Z' },
-      { id: 24, home_team: 'Borussia Monchengladbach', away_team: 'Schalke 04', date: '2025-09-02T15:30:00Z' }
+      { id: 21, home_team: 'Bayern Munich', away_team: 'Borussia Dortmund', date: upcomingDates[0]?.date },
+      { id: 22, home_team: 'RB Leipzig', away_team: 'Bayer Leverkusen', date: upcomingDates[1]?.date },
+      { id: 23, home_team: 'Eintracht Frankfurt', away_team: 'Wolfsburg', date: upcomingDates[2]?.date },
+      { id: 24, home_team: 'Borussia Monchengladbach', away_team: 'Union Berlin', date: upcomingDates[3]?.date },
+      { id: 25, home_team: 'SC Freiburg', away_team: 'VfB Stuttgart', date: upcomingDates[4]?.date },
+      { id: 26, home_team: 'TSG Hoffenheim', away_team: 'FC Augsburg', date: upcomingDates[5]?.date },
+      { id: 27, home_team: 'Werder Bremen', away_team: 'FC Heidenheim', date: upcomingDates[6]?.date },
+      { id: 28, home_team: '1. FC Koln', away_team: 'SV Darmstadt 98', date: upcomingDates[7]?.date },
+      { id: 29, home_team: 'VfL Bochum', away_team: 'Mainz 05', date: upcomingDates[8]?.date },
+      { id: 30, home_team: 'FC St. Pauli', away_team: 'Holstein Kiel', date: upcomingDates[9]?.date }
     ],
     'serie-a': [
-      { id: 31, home_team: 'Juventus', away_team: 'Inter Milan', date: '2025-08-30T19:00:00Z' },
-      { id: 32, home_team: 'AC Milan', away_team: 'Napoli', date: '2025-08-31T20:45:00Z' },
-      { id: 33, home_team: 'AS Roma', away_team: 'Lazio', date: '2025-09-01T17:00:00Z' },
-      { id: 34, home_team: 'Atalanta', away_team: 'Fiorentina', date: '2025-09-02T19:30:00Z' }
+      { id: 31, home_team: 'Juventus', away_team: 'Inter Milan', date: upcomingDates[0]?.date },
+      { id: 32, home_team: 'AC Milan', away_team: 'Napoli', date: upcomingDates[1]?.date },
+      { id: 33, home_team: 'AS Roma', away_team: 'Lazio', date: upcomingDates[2]?.date },
+      { id: 34, home_team: 'Atalanta', away_team: 'Fiorentina', date: upcomingDates[3]?.date },
+      { id: 35, home_team: 'Torino', away_team: 'Bologna', date: upcomingDates[4]?.date },
+      { id: 36, home_team: 'Udinese', away_team: 'Sassuolo', date: upcomingDates[5]?.date },
+      { id: 37, home_team: 'Genoa', away_team: 'Empoli', date: upcomingDates[6]?.date },
+      { id: 38, home_team: 'Lecce', away_team: 'Monza', date: upcomingDates[7]?.date },
+      { id: 39, home_team: 'Salernitana', away_team: 'Frosinone', date: upcomingDates[8]?.date },
+      { id: 40, home_team: 'Verona', away_team: 'Cagliari', date: upcomingDates[9]?.date }
     ],
     'ligue-1': [
-      { id: 41, home_team: 'Paris Saint-Germain', away_team: 'Marseille', date: '2025-08-30T20:00:00Z' },
-      { id: 42, home_team: 'Lyon', away_team: 'Monaco', date: '2025-08-31T19:00:00Z' },
-      { id: 43, home_team: 'Lille', away_team: 'Nice', date: '2025-09-01T20:00:00Z' },
-      { id: 44, home_team: 'Rennes', away_team: 'Nantes', date: '2025-09-02T17:00:00Z' }
+      { id: 41, home_team: 'Paris Saint-Germain', away_team: 'Marseille', date: upcomingDates[0]?.date },
+      { id: 42, home_team: 'Lyon', away_team: 'Monaco', date: upcomingDates[1]?.date },
+      { id: 43, home_team: 'Lille', away_team: 'Nice', date: upcomingDates[2]?.date },
+      { id: 44, home_team: 'Rennes', away_team: 'Nantes', date: upcomingDates[3]?.date },
+      { id: 45, home_team: 'Lens', away_team: 'Montpellier', date: upcomingDates[4]?.date },
+      { id: 46, home_team: 'Strasbourg', away_team: 'Reims', date: upcomingDates[5]?.date },
+      { id: 47, home_team: 'Brest', away_team: 'Lorient', date: upcomingDates[6]?.date },
+      { id: 48, home_team: 'Le Havre', away_team: 'Metz', date: upcomingDates[7]?.date },
+      { id: 49, home_team: 'Toulouse', away_team: 'Clermont', date: upcomingDates[8]?.date },
+      { id: 50, home_team: 'Angers', away_team: 'Ajaccio', date: upcomingDates[9]?.date }
     ]
   };
 
@@ -227,13 +287,35 @@ function App() {
         if (!HAS_BACKEND) {
           console.log('🔄 Using fallback matches data');
           const leagueMatches = FALLBACK_MATCHES[selectedLeague] || FALLBACK_MATCHES['premier-league'];
-          const formatted = leagueMatches.map(f => ({
-            label: `${f.home_team} vs ${f.away_team}`,
-            id: f.id,
-            league: selectedLeague,
-            venue: 'Stadium',
-            date: f.date
-          }));
+          
+          // Sort matches by date (earliest first)
+          const sortedMatches = leagueMatches
+            .filter(f => f.date) // Only include matches with valid dates
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
+          
+          const formatted = sortedMatches.map(f => {
+            const matchDate = new Date(f.date);
+            const dateStr = matchDate.toLocaleDateString('en-US', { 
+              weekday: 'short', 
+              month: 'short', 
+              day: 'numeric' 
+            });
+            const timeStr = matchDate.toLocaleTimeString('en-US', { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              hour12: false 
+            });
+            
+            return {
+              label: `${f.home_team} vs ${f.away_team} (${dateStr} ${timeStr})`,
+              id: f.id,
+              league: selectedLeague,
+              venue: 'Stadium',
+              date: f.date,
+              dateDisplay: `${dateStr} ${timeStr}`
+            };
+          });
+          
           setMatches(formatted);
           setLoadingMatches(false);
           console.log('✅ Loaded', formatted.length, 'fallback matches');
@@ -257,15 +339,37 @@ function App() {
         console.error('Failed to load matches:', e);
         // Fallback to demo data
         const leagueMatches = FALLBACK_MATCHES[selectedLeague] || FALLBACK_MATCHES['premier-league'];
-        const formatted = leagueMatches.map(f => ({
-          label: `${f.home_team} vs ${f.away_team}`,
-          id: f.id,
-          league: selectedLeague,
-          venue: 'Stadium',
-          date: f.date
-        }));
+        
+        // Sort matches by date (earliest first)
+        const sortedMatches = leagueMatches
+          .filter(f => f.date) // Only include matches with valid dates
+          .sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        const formatted = sortedMatches.map(f => {
+          const matchDate = new Date(f.date);
+          const dateStr = matchDate.toLocaleDateString('en-US', { 
+            weekday: 'short', 
+            month: 'short', 
+            day: 'numeric' 
+          });
+          const timeStr = matchDate.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+          });
+          
+          return {
+            label: `${f.home_team} vs ${f.away_team} (${dateStr} ${timeStr})`,
+            id: f.id,
+            league: selectedLeague,
+            venue: 'Stadium',
+            date: f.date,
+            dateDisplay: `${dateStr} ${timeStr}`
+          };
+        });
+        
         setMatches(formatted);
-        setErrorMatches('Using demo data - backend not available');
+        setErrorMatches('Using upcoming fixtures - backend not available');
         setLoadingMatches(false);
         console.log('🔄 Error fallback: Loaded', formatted.length, 'demo matches');
       }
@@ -382,7 +486,18 @@ User question: ${input}`;
         
         const aiData = await aiRes.json();
         
-        aiReply = aiData.choices?.[0]?.message?.content || 'Analysis temporarily unavailable.';
+        const rawReply = aiData.choices?.[0]?.message?.content || 'Analysis temporarily unavailable.';
+        
+        // Clean up formatting for better readability
+        aiReply = rawReply
+          .replace(/\*\*(.*?)\*\*/g, '$1')
+          .replace(/###\s*/g, '')
+          .replace(/##\s*/g, '')
+          .replace(/#\s*/g, '')
+          .replace(/\*\s+/g, '• ')
+          .replace(/\n{3,}/g, '\n\n')
+          .replace(/---+/g, '')
+          .trim();
         
       } catch (error) {
         // Fallback to limited analysis
@@ -475,11 +590,22 @@ User's specific question: ${input}`;
               })
             });
             const aiData = await aiRes.json();
-            const expertAnalysis = aiData.choices?.[0]?.message?.content || 'Analysis temporarily unavailable.';
+            const rawExpertAnalysis = aiData.choices?.[0]?.message?.content || 'Analysis temporarily unavailable.';
+            
+            // Clean up formatting for better readability
+            const cleanExpertAnalysis = rawExpertAnalysis
+              .replace(/\*\*(.*?)\*\*/g, '$1')
+              .replace(/###\s*/g, '')
+              .replace(/##\s*/g, '')
+              .replace(/#\s*/g, '')
+              .replace(/\*\s+/g, '• ')
+              .replace(/\n{3,}/g, '\n\n')
+              .replace(/---+/g, '')
+              .trim();
             
             setChat(prev => [...prev, {
               sender: 'assistant',
-              text: expertAnalysis
+              text: cleanExpertAnalysis
             }]);
           } catch (e) {
             // Fallback to basic prediction display
@@ -639,16 +765,33 @@ Be detailed, analytical, and provide clear reasoning for your probability predic
       }
 
       const aiData = await aiRes.json();
-      const analysis = aiData.choices?.[0]?.message?.content;
+      const rawAnalysis = aiData.choices?.[0]?.message?.content;
       
-      if (!analysis) {
+      if (!rawAnalysis) {
         throw new Error('No analysis received from AI');
       }
       
+      // Clean up formatting for better readability
+      const cleanAnalysis = rawAnalysis
+        // Remove markdown bold formatting
+        .replace(/\*\*(.*?)\*\*/g, '$1')
+        // Remove markdown headers
+        .replace(/###\s*/g, '')
+        .replace(/##\s*/g, '')
+        .replace(/#\s*/g, '')
+        // Clean up bullet points
+        .replace(/\*\s+/g, '• ')
+        // Clean up excessive spacing
+        .replace(/\n{3,}/g, '\n\n')
+        // Clean up dashes and formatting
+        .replace(/---+/g, '')
+        // Trim whitespace
+        .trim();
+      
       // Extract probabilities from AI response (improved regex matching)
-      const homeMatch = analysis.match(/home.*?win.*?(\d+)%/i) || analysis.match(/(\d+)%.*?home/i);
-      const drawMatch = analysis.match(/draw.*?(\d+)%/i);
-      const awayMatch = analysis.match(/away.*?win.*?(\d+)%/i) || analysis.match(/(\d+)%.*?away/i);
+      const homeMatch = cleanAnalysis.match(/home.*?win.*?(\d+)%/i) || cleanAnalysis.match(/(\d+)%.*?home/i);
+      const drawMatch = cleanAnalysis.match(/draw.*?(\d+)%/i);
+      const awayMatch = cleanAnalysis.match(/away.*?win.*?(\d+)%/i) || cleanAnalysis.match(/(\d+)%.*?away/i);
       
       const homePct = homeMatch ? parseInt(homeMatch[1]) : 40;
       const drawPct = drawMatch ? parseInt(drawMatch[1]) : 25;
@@ -665,7 +808,7 @@ Be detailed, analytical, and provide clear reasoning for your probability predic
           away_win: (awayPct / 100).toFixed(3)
         },
         analysis: {
-          full_analysis: analysis,
+          full_analysis: cleanAnalysis,
           confidence: 'AI Analysis'
         }
       });
