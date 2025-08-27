@@ -41,8 +41,5 @@
   },
   "engines": {
     "node": "22.x"
-  },
-  "functions": {
-    "runtime": "nodejs22.x"
   }
 }
