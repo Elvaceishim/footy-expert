@@ -45,18 +45,27 @@ exports.handler = async function(event, context) {
         body: JSON.stringify({ error: `League '${league}' not supported` })
       };
     }
-    const [recentResults, standings, fixtures] = await Promise.all([
-      fetchRecentResultsWithGoalscorers(league, 10),
-      fetchCurrentStandings(league),
-      fetchLiveFixtures(league)
-    ]);
-    // Aggregate likely goalscorers from recent results
-    const likely_goalscorers = extractLikelyGoalscorers(recentResults);
+    let recentResults, standings, fixtures, likely_goalscorers;
+    try {
+      [recentResults, standings, fixtures] = await Promise.all([
+        fetchRecentResultsWithGoalscorers(league, 10),
+        fetchCurrentStandings(league),
+        fetchLiveFixtures(league)
+      ]);
+      likely_goalscorers = extractLikelyGoalscorers(recentResults);
+    } catch (dataError) {
+      console.error('Data fetch error:', dataError);
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: 'Data fetch error', details: dataError.message })
+      };
+    }
     const responseBody = {
       league: LEAGUES[league].name,
       league_key: league,
       current_date: new Date().toISOString().split('T')[0],
-      recent_results: recentResults.slice(0, 8), // now includes goalscorers arrays
+      recent_results: recentResults.slice(0, 8),
       current_standings: standings,
       upcoming_fixtures: fixtures.slice(0, 10),
       likely_goalscorers,
@@ -68,6 +77,7 @@ exports.handler = async function(event, context) {
       body: JSON.stringify(responseBody)
     };
   } catch (error) {
+    console.error('API error:', error);
     return {
       statusCode: 500,
       headers,
