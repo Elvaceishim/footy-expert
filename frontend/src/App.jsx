@@ -452,10 +452,20 @@ ${footballData.upcoming_fixtures?.map(fixture =>
 
 Last Updated: ${footballData.last_updated}`;
 
-        // Add likely goalscorers to the prompt if available
+        // Group likely goalscorers by team for richer context
         let likelyScorersText = '';
         if (footballData.likely_goalscorers && footballData.likely_goalscorers.length > 0) {
-          likelyScorersText = `\n\nTOP LIKELY GOALSCORERS (based on recent matches):\n` + footballData.likely_goalscorers.map((scorer, idx) => `${idx+1}. ${scorer.name} (${scorer.goals} goals)`).join('\n');
+          const teamScorers = {};
+          footballData.likely_goalscorers.forEach(scorer => {
+            // Try to extract team from scorer name if possible (requires backend support for team info)
+            // For now, just aggregate all
+            if (!teamScorers[scorer.team]) teamScorers[scorer.team] = [];
+            teamScorers[scorer.team].push(scorer);
+          });
+          likelyScorersText = `\n\nTOP LIKELY GOALSCORERS (based on recent matches):\n` +
+            Object.entries(teamScorers).map(([team, scorers]) =>
+              `${team}: ` + scorers.map(s => `${s.name} (${s.goals} goals)`).join(', ')
+            ).join('\n');
         }
 
         // Professional expert prompt with real data
@@ -473,7 +483,7 @@ You have access to:
 - Real team performance data
 - Some matches may include goalscorer information when available
 - Advanced Dixon-Coles statistical model for match predictions
-- Top likely goalscorers based on recent matches
+- Top likely goalscorers based on recent matches, grouped by team
 
 INSTRUCTIONS:
 - Use ONLY the REAL data provided above to answer questions accurately
@@ -481,7 +491,7 @@ INSTRUCTIONS:
 - When discussing team form, use ONLY the real recent results and standings provided
 - When asked about league positions, use ONLY the current standings provided
 - When analyzing specific upcoming fixtures, provide detailed statistical analysis based ONLY on the data provided
-- If asked about likely goalscorers, mention the top likely goalscorers from the provided list, and explain why they are most likely to score
+- If asked about likely goalscorers, mention the top likely goalscorers from the provided list, grouped by team, and explain why they are most likely to score
 - Always specify that your information is current as of ${footballData.current_date}
 - Focus on statistical analysis, team form, and tactical insights based ONLY on actual performance data shown
 - DO NOT mention specific injury updates, transfers, or team news unless explicitly provided in the data above
@@ -489,7 +499,7 @@ INSTRUCTIONS:
 - DO NOT reference technical statistical models by name - keep methodology in background
 - If asked about team news, acknowledge that you focus on statistical analysis rather than latest squad updates
 
-IMPORTANT: If asked about a specific upcoming match, provide comprehensive statistical analysis including expected goals, team strength ratings, recent form, tactical considerations, and likely goalscorers based on actual performance data.
+IMPORTANT: If asked about a specific upcoming match, provide comprehensive statistical analysis including expected goals, team strength ratings, recent form, tactical considerations, and likely goalscorers based on actual performance data. Always mention specific player names and their recent goal stats when relevant.
 
 Provide factual, accurate analysis using this real data. Be professional, analytical, and data-driven while keeping the technical methodology in the background.
 
@@ -533,6 +543,9 @@ User question: ${input}`;
         // Fallback to limited analysis
         aiReply = `Unable to fetch current football data at the moment: ${error.message}. Please try again shortly.`;
       }
+
+      // Remove fallback message from all AI responses
+      const cleanReply = aiReply.replace(/❌ Unable to fetch detailed match analysis\. The Genie's crystal ball is cloudy right now!/g, '').trim();
 
       // Try to extract match name and fetch prediction with detailed analysis
       const matchId = findMatchIdFromText(input, matches);
@@ -633,15 +646,19 @@ User's specific question: ${input}`;
               .replace(/---+/g, '')
               .trim();
             
+            // Remove fallback message from expert analysis
+            const cleanExpertAnalysisFinal = cleanExpertAnalysis
+              .replace(/❌ Unable to fetch detailed match analysis\. The Genie's crystal ball is cloudy right now!/g, '')
+              .trim();
+            
             setChat(prev => [...prev, {
               sender: 'assistant',
-              text: cleanExpertAnalysis
+              text: cleanExpertAnalysisFinal
             }]);
           } catch (e) {
-            // Instead of repetitive fallback, show only the AI reply or a concise error
             setChat(prev => [...prev, {
               sender: 'assistant',
-              text: aiReply || 'Sorry, I was unable to fetch detailed match analysis at this time.'
+              text: cleanReply || 'Sorry, I was unable to fetch detailed match analysis at this time.'
             }]);
           }
         } catch (e) {
@@ -651,7 +668,7 @@ User's specific question: ${input}`;
           }]);
         }
       } else {
-        setChat(prev => [...prev, { sender: 'assistant', text: aiReply }]);
+        setChat(prev => [...prev, { sender: 'assistant', text: cleanReply }]);
       }
       
       setIsAiThinking(false);
