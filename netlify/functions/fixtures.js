@@ -33,16 +33,19 @@ exports.handler = async function(event, context) {
         body: JSON.stringify({ error: `League '${league}' not supported` })
       };
     }
-    const fixtures = await fetchLiveFixtures(league);
+    let fixtures = [];
+    try {
+      fixtures = await fetchLiveFixtures(league);
+      if (!Array.isArray(fixtures)) fixtures = [];
+    } catch (fetchError) {
+      console.error('Error in fetchLiveFixtures:', fetchError);
+      fixtures = [];
+    }
+    console.log('Returning fixtures:', fixtures.length);
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({
-        league: LEAGUES[league]?.name,
-        league_key: league,
-        fixtures,
-        total: fixtures.length
-      })
+      body: JSON.stringify({ league, league_key: league, fixtures, total: fixtures.length })
     };
   } catch (error) {
     console.error('Error fetching fixtures:', error);
