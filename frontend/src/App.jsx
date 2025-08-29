@@ -425,18 +425,16 @@ LEAGUE: ${footballData.league}
 RECENT ACTUAL MATCH RESULTS:
 ${footballData.recent_results?.map(match => {
   let matchStr = `${match.date}: ${match.home_team} ${match.home_score}-${match.away_score} ${match.away_team} (${match.venue})`;
-  
   // Add goalscorers if available
-  if (match.home_goalscorers || match.away_goalscorers) {
+  if ((match.home_goalscorers && match.home_goalscorers.length > 0) || (match.away_goalscorers && match.away_goalscorers.length > 0)) {
     matchStr += '\n  Goalscorers:';
-    if (match.home_goalscorers) {
-      matchStr += ` ${match.home_team}: ${match.home_goalscorers}`;
+    if (match.home_goalscorers && match.home_goalscorers.length > 0) {
+      matchStr += ` ${match.home_team}: ${match.home_goalscorers.join(', ')}`;
     }
-    if (match.away_goalscorers) {
-      matchStr += ` ${match.away_team}: ${match.away_goalscorers}`;
+    if (match.away_goalscorers && match.away_goalscorers.length > 0) {
+      matchStr += ` ${match.away_team}: ${match.away_goalscorers.join(', ')}`;
     }
   }
-  
   return matchStr;
 }).join('\n\n') || 'No recent results available'}
 

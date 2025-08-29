@@ -56,7 +56,7 @@ exports.handler = async function(event, context) {
       league: LEAGUES[league].name,
       league_key: league,
       current_date: new Date().toISOString().split('T')[0],
-      recent_results: recentResults.slice(0, 8),
+      recent_results: recentResults.slice(0, 8), // now includes goalscorers arrays
       current_standings: standings,
       upcoming_fixtures: fixtures.slice(0, 10),
       likely_goalscorers,

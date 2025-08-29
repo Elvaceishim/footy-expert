@@ -126,8 +126,8 @@ async function fetchRecentResultsWithGoalscorers(leagueKey = 'premier-league', m
             country: league.country,
             season: season,
             matchday: event.intRound || 'Unknown',
-            home_goalscorers: event.strHomeGoalDetails || '',
-            away_goalscorers: event.strAwayGoalDetails || ''
+            home_goalscorers: event.strHomeGoalDetails ? event.strHomeGoalDetails.split(';').map(s => s.trim()).filter(Boolean) : [],
+            away_goalscorers: event.strAwayGoalDetails ? event.strAwayGoalDetails.split(';').map(s => s.trim()).filter(Boolean) : []
           }));
         allResults.push(...seasonResults);
         console.log(`✅ Added ${seasonResults.length} results from ${season}`);
