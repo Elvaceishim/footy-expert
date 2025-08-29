@@ -453,6 +453,8 @@ Last Updated: ${footballData.last_updated}`;
         // Professional expert prompt with real data
         const expertPrompt = `You are a professional football analyst with access to REAL, CURRENT football data.
 
+Respond as a professional football analyst, engaging in a natural, insightful conversation. Vary your sentence structure, use advanced vocabulary, and adapt your tone to the user's questions. Reference relevant football context or history when appropriate.
+
 ${realTimeFootballData}
 
 You have access to:
@@ -625,22 +627,10 @@ User's specific question: ${input}`;
               text: cleanExpertAnalysis
             }]);
           } catch (e) {
-            // Fallback to basic prediction display
-            const basicAnalysis = `� **THE PROPHET'S QUICK INSIGHT**\n\n` +
-              `📊 **${analysisData.match_details.teams}**\n` +
-              `🏟️ ${analysisData.match_details.venue} | 🏆 ${analysisData.match_details.league}\n\n` +
-              `📈 **FORM GUIDE:**\n` +
-              `🏠 Home: ${analysisData.form_analysis.home_team.last_5_games} (${analysisData.form_analysis.home_team.goals_scored_l5} goals scored)\n` +
-              `✈️ Away: ${analysisData.form_analysis.away_team.last_5_games} (${analysisData.form_analysis.away_team.goals_scored_l5} goals scored)\n\n` +
-              `🎯 **PREDICTIONS:**\n` +
-              `🏠 Home Win: **${analysisData.predictions.home_win}**\n` +
-              `🤝 Draw: **${analysisData.predictions.draw}**\n` +
-              `✈️ Away Win: **${analysisData.predictions.away_win}**\n\n` +
-              `💡 **QUICK TAKE:** ${analysisData.betting_insights.value_spots}`;
-            
+            // Instead of repetitive fallback, show only the AI reply or a concise error
             setChat(prev => [...prev, {
               sender: 'assistant',
-              text: basicAnalysis
+              text: aiReply || 'Sorry, I was unable to fetch detailed match analysis at this time.'
             }]);
           }
         } catch (e) {
@@ -690,6 +680,8 @@ User's specific question: ${input}`;
       console.log('🏟️ Analyzing:', homeTeam, 'vs', awayTeam, 'in', leagueName);
       
       const predictionPrompt = `You are a professional football analyst. Analyze the upcoming match between ${homeTeam} vs ${awayTeam} in the ${leagueName}.
+
+Respond as a professional football analyst, engaging in a natural, insightful conversation. Vary your sentence structure, use advanced vocabulary, and adapt your tone to the user's questions. Reference relevant football context or history when appropriate.
 
 Please provide a comprehensive match analysis with:
 
@@ -996,7 +988,7 @@ Be detailed, analytical, and provide clear reasoning for your probability predic
               >
                 {leagues.map((league) => (
                   <MenuItem key={league.key} value={league.key}>
-                    {league.country === 'England' ? '🏴󠁧󠁢󠁥󠁮󠁧󠁿' : 
+                    {league.country === 'England' ? '🏴' : 
                      league.country === 'Spain' ? '🇪🇸' :
                      league.country === 'Germany' ? '🇩🇪' :
                      league.country === 'Italy' ? '🇮🇹' :
