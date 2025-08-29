@@ -48,8 +48,48 @@ const getOpenRouterApiKey = () => {
 };
 
 const OPENROUTER_API_KEY = getOpenRouterApiKey();
-const API_BASE_URL = ''; // Use relative URLs to go through Vite proxy
+const API_BASE_URL = '';
 
-// ... rest of the App component (truncated for space but would include the full component)
+function App() {
+  const [leagues, setLeagues] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch('/.netlify/functions/leagues')
+      .then(res => res.json())
+      .then(data => {
+        setLeagues(data.leagues || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError('Failed to load leagues');
+        setLoading(false);
+      });
+  }, []);
+
+  return (
+    <Container maxWidth="md">
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6">Footy Expert</Typography>
+        </Toolbar>
+      </AppBar>
+      <Box mt={4}>
+        <Typography variant="h4" gutterBottom>Leagues</Typography>
+        {loading && <CircularProgress />}
+        {error && <Typography color="error">{error}</Typography>}
+        <List>
+          {leagues.map(league => (
+            <ListItem key={league.key}>
+              <Typography>{league.name} ({league.country})</Typography>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+    </Container>
+  );
+}
 
 export default App;
