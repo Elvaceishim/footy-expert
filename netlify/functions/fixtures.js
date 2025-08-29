@@ -1,5 +1,18 @@
 const { fetchLiveFixtures, LEAGUES } = require('../../api/utils.cjs');
 
+function getLeagueKey(event) {
+  // Try to extract league from path (e.g. /api/fixtures/la-liga)
+  const pathMatch = event.path && event.path.match(/fixtures\/?([\w-]+)/);
+  if (pathMatch && pathMatch[1]) {
+    return pathMatch[1];
+  }
+  // Fallback to query string
+  if (event.queryStringParameters && event.queryStringParameters.league) {
+    return event.queryStringParameters.league;
+  }
+  return 'premier-league';
+}
+
 exports.handler = async function(event, context) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -24,8 +37,7 @@ exports.handler = async function(event, context) {
   }
 
   try {
-    const params = event.queryStringParameters || {};
-    const league = params.league || 'premier-league';
+    const league = getLeagueKey(event);
     if (!LEAGUES[league]) {
       console.log('League not supported:', league);
       return {
