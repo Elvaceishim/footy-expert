@@ -403,6 +403,8 @@ function App() {
     if (input.trim()) {
       setChat([...chat, { sender: 'user', text: input }]);
       setIsAiThinking(true);
+      // Show loading state message
+      setChat(prev => [...prev, { sender: 'assistant', text: "I'm thinking..." }]);
       let aiReply = '';
       
       try {
@@ -450,12 +452,19 @@ ${footballData.upcoming_fixtures?.map(fixture =>
 
 Last Updated: ${footballData.last_updated}`;
 
+        // Add likely goalscorers to the prompt if available
+        let likelyScorersText = '';
+        if (footballData.likely_goalscorers && footballData.likely_goalscorers.length > 0) {
+          likelyScorersText = `\n\nTOP LIKELY GOALSCORERS (based on recent matches):\n` + footballData.likely_goalscorers.map((scorer, idx) => `${idx+1}. ${scorer.name} (${scorer.goals} goals)`).join('\n');
+        }
+
         // Professional expert prompt with real data
         const expertPrompt = `You are a professional football analyst with access to REAL, CURRENT football data.
 
 Respond as a professional football analyst, engaging in a natural, insightful conversation. Vary your sentence structure, use advanced vocabulary, and adapt your tone to the user's questions. Reference relevant football context or history when appropriate.
 
 ${realTimeFootballData}
+${likelyScorersText}
 
 You have access to:
 - Actual recent match results with real scores
@@ -464,6 +473,7 @@ You have access to:
 - Real team performance data
 - Some matches may include goalscorer information when available
 - Advanced Dixon-Coles statistical model for match predictions
+- Top likely goalscorers based on recent matches
 
 INSTRUCTIONS:
 - Use ONLY the REAL data provided above to answer questions accurately
@@ -471,6 +481,7 @@ INSTRUCTIONS:
 - When discussing team form, use ONLY the real recent results and standings provided
 - When asked about league positions, use ONLY the current standings provided
 - When analyzing specific upcoming fixtures, provide detailed statistical analysis based ONLY on the data provided
+- If asked about likely goalscorers, mention the top likely goalscorers from the provided list, and explain why they are most likely to score
 - Always specify that your information is current as of ${footballData.current_date}
 - Focus on statistical analysis, team form, and tactical insights based ONLY on actual performance data shown
 - DO NOT mention specific injury updates, transfers, or team news unless explicitly provided in the data above
@@ -478,7 +489,7 @@ INSTRUCTIONS:
 - DO NOT reference technical statistical models by name - keep methodology in background
 - If asked about team news, acknowledge that you focus on statistical analysis rather than latest squad updates
 
-IMPORTANT: If asked about a specific upcoming match, provide comprehensive statistical analysis including expected goals, team strength ratings, recent form, and tactical considerations based on actual performance data.
+IMPORTANT: If asked about a specific upcoming match, provide comprehensive statistical analysis including expected goals, team strength ratings, recent form, tactical considerations, and likely goalscorers based on actual performance data.
 
 Provide factual, accurate analysis using this real data. Be professional, analytical, and data-driven while keeping the technical methodology in the background.
 
@@ -731,7 +742,7 @@ Be detailed, analytical, and provide clear reasoning for your probability predic
       }
       
       if (OPENROUTER_API_KEY.length < 20) {
-        throw new Error(`API key seems too short. Length: ${OPENROUTER_API_KEY.length}, Expected: > 20 chars`);
+        throw new Error(`API key seems to short. Length: ${OPENROUTER_API_KEY.length}, Expected: > 20 chars`);
       }
 
       const aiRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {

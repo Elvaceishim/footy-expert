@@ -1,4 +1,4 @@
-const { fetchRecentResults, fetchCurrentStandings, fetchLiveFixtures, LEAGUES } = require('../../api/utils.cjs');
+const { fetchRecentResultsWithGoalscorers, fetchCurrentStandings, fetchLiveFixtures, LEAGUES, extractLikelyGoalscorers } = require('../../api/utils.cjs');
 
 function getLeagueKey(event) {
   // Try to extract league from path (e.g. /api/football-data/la-liga)
@@ -46,10 +46,12 @@ exports.handler = async function(event, context) {
       };
     }
     const [recentResults, standings, fixtures] = await Promise.all([
-      fetchRecentResults(league, 10),
+      fetchRecentResultsWithGoalscorers(league, 10),
       fetchCurrentStandings(league),
       fetchLiveFixtures(league)
     ]);
+    // Aggregate likely goalscorers from recent results
+    const likely_goalscorers = extractLikelyGoalscorers(recentResults);
     const responseBody = {
       league: LEAGUES[league].name,
       league_key: league,
@@ -57,6 +59,7 @@ exports.handler = async function(event, context) {
       recent_results: recentResults.slice(0, 8),
       current_standings: standings,
       upcoming_fixtures: fixtures.slice(0, 10),
+      likely_goalscorers,
       last_updated: new Date().toISOString()
     };
     return {

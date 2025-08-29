@@ -99,6 +99,78 @@ async function fetchRecentResults(leagueKey = 'premier-league', minMatches = 5) 
   }
 }
 
+async function fetchRecentResultsWithGoalscorers(leagueKey = 'premier-league', minMatches = 5) {
+  const league = LEAGUES[leagueKey];
+  if (!league) throw new Error(`League '${leagueKey}' not supported`);
+
+  try {
+    console.log(`🔄 Fetching ${league.name} recent results with goalscorers...`);
+    let allResults = [];
+    const seasons = ['2025-2026', '2024-2025'];
+    for (const season of seasons) {
+      if (allResults.length >= 100) break;
+      const response = await sportsDB.get(`/eventsseason.php?id=${league.id}&s=${season}`);
+      if (response.data.events && response.data.events.length > 0) {
+        const seasonResults = response.data.events
+          .filter(event => event.intHomeScore !== null && event.intAwayScore !== null)
+          .sort((a, b) => new Date(b.dateEvent) - new Date(a.dateEvent))
+          .map(event => ({
+            id: event.idEvent,
+            date: event.dateEvent,
+            home_team: event.strHomeTeam,
+            away_team: event.strAwayTeam,
+            home_score: parseInt(event.intHomeScore) || 0,
+            away_score: parseInt(event.intAwayScore) || 0,
+            venue: event.strVenue || 'TBD',
+            league: league.name,
+            country: league.country,
+            season: season,
+            matchday: event.intRound || 'Unknown',
+            home_goalscorers: event.strHomeGoalDetails || '',
+            away_goalscorers: event.strAwayGoalDetails || ''
+          }));
+        allResults.push(...seasonResults);
+        console.log(`✅ Added ${seasonResults.length} results from ${season}`);
+      }
+    }
+    allResults.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const recentResults = allResults.slice(0, Math.max(minMatches * 4, 50));
+    console.log(`✅ Total recent results loaded: ${recentResults.length} for ${league.name}`);
+    return recentResults;
+  } catch (error) {
+    console.error(`❌ Failed to fetch ${league.name} recent results:`, error.message);
+    return [];
+  }
+}
+
+function extractLikelyGoalscorers(recentResults) {
+  // Aggregate goalscorers from recent matches
+  const scorerMap = {};
+  recentResults.forEach(match => {
+    // Home team
+    if (match.home_goalscorers) {
+      match.home_goalscorers.split(';').forEach(scorer => {
+        const name = scorer.split('(')[0].trim();
+        if (!name) return;
+        scorerMap[name] = (scorerMap[name] || 0) + 1;
+      });
+    }
+    // Away team
+    if (match.away_goalscorers) {
+      match.away_goalscorers.split(';').forEach(scorer => {
+        const name = scorer.split('(')[0].trim();
+        if (!name) return;
+        scorerMap[name] = (scorerMap[name] || 0) + 1;
+      });
+    }
+  });
+  // Sort by goals scored
+  const sortedScorers = Object.entries(scorerMap)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, goals]) => ({ name, goals }));
+  return sortedScorers.slice(0, 10); // Top 10
+}
+
 async function fetchCurrentStandings(leagueKey = 'premier-league') {
   const league = LEAGUES[leagueKey];
   if (!league) throw new Error(`League '${leagueKey}' not supported`);
@@ -146,5 +218,7 @@ module.exports = {
   LEAGUES,
   fetchLiveFixtures,
   fetchRecentResults,
-  fetchCurrentStandings
+  fetchCurrentStandings,
+  fetchRecentResultsWithGoalscorers,
+  extractLikelyGoalscorers
 };
