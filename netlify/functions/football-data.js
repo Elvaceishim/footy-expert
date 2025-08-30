@@ -1,4 +1,4 @@
-const { fetchRecentResultsWithGoalscorers, fetchCurrentStandings, fetchLiveFixtures, LEAGUES, extractLikelyGoalscorers } = require('../../api/utils.cjs');
+const { fetchRecentResults, fetchCurrentStandings, fetchLiveFixtures, LEAGUES } = require('../../api/utils.cjs');
 
 function getLeagueKey(event) {
   // Try to extract league from path (e.g. /api/football-data/la-liga)
@@ -45,22 +45,11 @@ exports.handler = async function(event, context) {
         body: JSON.stringify({ error: `League '${league}' not supported` })
       };
     }
-    let recentResults, standings, fixtures, likely_goalscorers;
-    try {
-      [recentResults, standings, fixtures] = await Promise.all([
-        fetchRecentResultsWithGoalscorers(league, 10),
-        fetchCurrentStandings(league),
-        fetchLiveFixtures(league)
-      ]);
-      likely_goalscorers = extractLikelyGoalscorers(recentResults);
-    } catch (dataError) {
-      console.error('Data fetch error:', dataError);
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({ error: 'Data fetch error', details: dataError.message })
-      };
-    }
+    const [recentResults, standings, fixtures] = await Promise.all([
+      fetchRecentResults(league, 10),
+      fetchCurrentStandings(league),
+      fetchLiveFixtures(league)
+    ]);
     const responseBody = {
       league: LEAGUES[league].name,
       league_key: league,
@@ -68,7 +57,6 @@ exports.handler = async function(event, context) {
       recent_results: recentResults.slice(0, 8),
       current_standings: standings,
       upcoming_fixtures: fixtures.slice(0, 10),
-      likely_goalscorers,
       last_updated: new Date().toISOString()
     };
     return {
@@ -77,7 +65,6 @@ exports.handler = async function(event, context) {
       body: JSON.stringify(responseBody)
     };
   } catch (error) {
-    console.error('API error:', error);
     return {
       statusCode: 500,
       headers,
