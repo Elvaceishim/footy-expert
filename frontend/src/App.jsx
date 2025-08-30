@@ -863,7 +863,8 @@ Be detailed, analytical, and provide clear reasoning for your probability predic
         errorMessage = 'API Key Required';
         detailedAnalysis = `To get AI predictions for ${homeTeam} vs ${awayTeam}, you need to:\n\n1. Get an API key from https://openrouter.ai/\n2. Add it to your environment variables as VITE_OPENROUTER_API_KEY\n3. Restart the application\n\nThe API key enables access to advanced AI analysis for match predictions.`;
       } else if (error.message.includes('Rate limit exceeded')) {
-        detailedAnalysis = `Rate limit exceeded for ${homeTeam} vs ${awayTeam}.\n\nPlease wait a few minutes before requesting another prediction.`;
+        errorMessage = 'Too many requests to Football Expert';
+        detailedAnalysis = `You've hit the AI rate limit. Please wait a few minutes and try again. If you need higher limits, consider upgrading your OpenRouter account or adding more credits.\n\nThis helps keep the service fast and fair for everyone!`;
       } else {
         detailedAnalysis = `Failed to analyze ${homeTeam} vs ${awayTeam}.\n\nError: ${error.message}\n\nThis could be due to:\n• Invalid or expired API key\n• Network connectivity issues\n• API service problems\n• Rate limiting\n\nPlease check your OpenRouter API key and try again.`;
       }
