@@ -662,7 +662,7 @@ User's specific question: ${input}`;
         } catch (e) {
           setChat(prev => [...prev, {
             sender: 'assistant',
-            text: `${aiReply}\n\n❌ Unable to fetch detailed match analysis. The Genie's crystal ball is cloudy right now!`
+            text: cleanReply || 'Sorry, I was unable to fetch detailed match analysis at this time.'
           }]);
         }
       } else {
